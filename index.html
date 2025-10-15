@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Menu Estilo The Sims 4</title>
+
+<!-- Google font similar to The Sims UI -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@600&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    background: linear-gradient(to bottom, #a9d6f5, #ffffff);
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Nunito Sans', 'Trebuchet MS', Verdana, sans-serif;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  .sims-menu {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .character-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(35vw, 180px);
+    height: min(35vw, 180px);
+    min-width: 100px; 
+    min-height: 100px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 4px solid #99cfff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 2;
+    transition: transform 0.2s ease;
+    background-color: white;
+  }
+
+  .character-btn:hover {
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+
+  .character-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .option {
+    position: absolute;
+    background: linear-gradient(to bottom, #e7f3ff 0%, #d3e8ff 100%);
+    border-radius: 30px;
+    padding: 10px 24px;
+    color: #004080;
+    border: 2px solid #bcd7ff;
+    cursor: pointer;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.25);
+    text-align: center;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+    transition: 
+      transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), 
+      opacity 0.3s ease, 
+      background 0.2s ease;
+    z-index: 5;
+    pointer-events: all;
+    font-size: clamp(13px, 2.5vw, 16px);
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
+  }
+
+  .option.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .option:hover {
+    background: linear-gradient(to bottom, #d8ecff 0%, #c2e0ff 100%);
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  /* Small screen tweaks */
+  @media (max-width: 600px) {
+    .option {
+      padding: 8px 16px;
+      font-size: clamp(11px, 3vw, 14px);
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="sims-menu">
+    <div class="character-btn" id="characterBtn">
+      <img src="personagem.png" alt="Personagem" />
+      <!-- <img src="test.png" alt="Personagem" /> -->
+    </div>
+    <div class="orbit" id="orbitContainer"></div>
+  </div>
+
+<script>
+  const character = document.getElementById('characterBtn');
+  const orbit = document.getElementById('orbitContainer');
+
+  // 💬 Menu options
+  const menuOptions = [
+      "Ligar o notebook",
+    "Tomar um café",
+    "Dar risada",
+    "Ligar o notebook",
+    "Malhar",
+    "Ir Correr",
+    "Trabalhar",
+    "Ligar o notebook",
+    "Contar piada",
+  ];
+
+  // Build buttons dynamically
+  menuOptions.forEach(text => {
+    const el = document.createElement('div');
+    el.className = 'option';
+    el.textContent = text;
+    orbit.appendChild(el);
+  });
+
+  const options = [...document.querySelectorAll('.option')];
+  const clickSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+  let menuOpen = false;
+
+  // Compute radius safely
+  function computeSafeRadius() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const base = Math.min(vw, vh) * 0.32;
+    return Math.max(90, base);
+  }
+
+  // Full circular layout
+  function getAngles() {
+    const total = options.length;
+    return Array.from({ length: total }, (_, i) =>
+      (i / total) * (2 * Math.PI) - Math.PI / 2
+    );
+  }
+
+  function positionOptions() {
+    const radius = computeSafeRadius();
+    const angles = getAngles();
+    options.forEach((opt, i) => {
+      const a = angles[i];
+      const x = Math.cos(a) * radius;
+      const y = Math.sin(a) * radius;
+      opt.dataset.x = x.toFixed(2);
+      opt.dataset.y = y.toFixed(2);
+    });
+  }
+
+  function toggleMenu() {
+    clickSound.play();
+    menuOpen = !menuOpen;
+    if (menuOpen) {
+      options.forEach((opt, i) => {
+        opt.style.left = '50%';
+        opt.style.top = '50%';
+        setTimeout(() => {
+          opt.classList.add('show');
+          opt.style.left = `calc(50% + ${opt.dataset.x}px)`;
+          opt.style.top  = `calc(50% + ${opt.dataset.y}px)`;
+        }, i * 80);
+      });
+    } else {
+      options.forEach((opt, i) => {
+        setTimeout(() => {
+          opt.classList.remove('show');
+          opt.style.left = '50%';
+          opt.style.top  = '50%';
+        }, i * 50);
+      });
+    }
+  }
+
+  character.addEventListener('click', toggleMenu);
+
+  options.forEach(btn => {
+    btn.addEventListener('click', () => {
+      alert(`Você escolheu: ${btn.textContent}`);
+      toggleMenu();
+    });
+  });
+
+  window.addEventListener('resize', positionOptions);
+  positionOptions();
+
+
+
+
+// === VISITOR COUNTER ===
+const counterDisplay = document.createElement('div');
+counterDisplay.style.position = 'fixed';
+counterDisplay.style.bottom = '10px';
+counterDisplay.style.right = '10px';
+counterDisplay.style.background = 'rgba(255,255,255,0.85)';
+counterDisplay.style.borderRadius = '10px';
+counterDisplay.style.padding = '6px 10px';
+counterDisplay.style.fontFamily = 'Nunito Sans, sans-serif';
+counterDisplay.style.fontSize = '14px';
+counterDisplay.style.color = '#004080';
+counterDisplay.style.boxShadow = '0 0 6px rgba(0,0,0,0.2)';
+document.body.appendChild(counterDisplay);
+
+// Use a unique namespace/key for your site
+const namespace = "sims_menu_demo";
+const key = "visits";
+
+async function updateVisitorCount() {
+  try {
+    // Ensure counter exists
+    await fetch(`https://api.countapi.xyz/create?namespace=${namespace}&key=${key}&value=0&update_lowerbound=1`);
+    // Increment and get the new value
+    const res = await fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`);
+    const data = await res.json();
+    counterDisplay.textContent = `👀 Visitas: ${data.value}`;
+  } catch (err) {
+    counterDisplay.textContent = '👀 Contador indisponível';
+    console.error("Erro no contador:", err);
+  }
+}
+
+updateVisitorCount();
+
+</script>
+</body>
+</html>
